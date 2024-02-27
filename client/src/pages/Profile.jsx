@@ -30,8 +30,9 @@ export default function Profile() {
   const [fileUploadError, setFileUploadError] = useState(false);
   const [formData, setFormData] = useState({});
   const [updateSuccess, setUpdateSuccess] = useState(false);
-  console.log(formData);
-
+  const [userListings, setUserListings] = useState([])
+  console.log("user listing" + [...userListings]);
+  const [showListingError, setShowListingError] = useState(false)
   const dispatch = useDispatch();
 
   useEffect(() => {
@@ -121,6 +122,22 @@ export default function Profile() {
     }
   };
 
+    const handleShowListings = async()=>{
+        try {
+          setShowListingError(false)
+          const res = await fetch(`api/user/listings/${currentUser._id}`);
+          const data = await res.json();
+          console.log(data)
+          if(data.success === false) {
+            setShowListingError(true);
+            return;
+          }
+          setUserListings(data);
+        } catch (error) {
+          setShowListingError(true);
+        }
+    }
+
   return (
     <div className="p-3 max-w-lg mx-auto">
       <h1 className="text-3xl font-semibold text-center my-7 ">Profile</h1>
@@ -198,7 +215,49 @@ export default function Profile() {
       <p className="text-red-700 mt-5">{error ? error : ""}</p>
       <p className="text-green-700 mt-5">
         {updateSuccess ? "User is updated successfully!" : ""}
+
       </p>
+      <button onClick={handleShowListings} className="bg-green-700 text-white rounded-lg p-3 uppercase text-center w-full hover:opacity-95 disabled:opacity-80">Show Listings</button>
+            <p className="text-red-700 mt-5">{showListingError ? 'Error showng listings': ''}</p>
+            {userListings && userListings.length > 0 && (
+        <div className='flex flex-col gap-4'>
+          <h1 className='text-center mt-7 text-2xl font-semibold'>
+            Your Listings
+          </h1>
+          {userListings.map((listing) => (
+            <div
+              key={listing._id}
+              className='border rounded-lg p-3 flex justify-between items-center gap-4'
+            >
+              <Link to={`/listing/${listing._id}`}>
+                <img
+                  src={listing.imageUrls[0]}
+                  alt='listing cover'
+                  className='h-16 w-16 object-contain'
+                />
+              </Link>
+              <Link
+                className='text-slate-700 font-semibold  hover:underline truncate flex-1'
+                to={`/listing/${listing._id}`}
+              >
+                <p>{listing.name}</p>
+              </Link>
+
+              <div className='flex flex-col item-center'>
+                <button
+                  onClick={() => handleListingDelete(listing._id)}
+                  className='text-red-700 uppercase'
+                >
+                  Delete
+                </button>
+                <Link to={`/update-listing/${listing._id}`}>
+                  <button className='text-green-700 uppercase'>Edit</button>
+                </Link>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 }
